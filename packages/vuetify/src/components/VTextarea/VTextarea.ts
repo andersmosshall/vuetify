@@ -74,13 +74,47 @@ export default baseMixins.extend({
     calculateInputHeight () {
       const input = this.$refs.input
       if (!input) return
-
-      input.style.height = '0'
-      const height = input.scrollHeight
       const minHeight = parseInt(this.rows, 10) * parseFloat(this.rowHeight)
+
+      let height = 0
+      if (input.value) {
+        let helperTextArea = this.getHelperTextArea(input)
+        if (helperTextArea) {
+          helperTextArea.style.width = input.style.width
+          helperTextArea.value = input.value
+          height = helperTextArea.scrollHeight
+        }
+      }
+
       // This has to be done ASAP, waiting for Vue
       // to update the DOM causes ugly layout jumping
       input.style.height = Math.max(minHeight, height) + 'px'
+    },
+    getHelperTextArea(input) {
+      // Get (and create if needed) a helper text area to be able to
+      // calculate input height more effectively.
+      if (input) {
+        const helperId = input.id + '-helper'
+        let helperTextArea = document.querySelector('#' + helperId)
+
+        if (helperTextArea) {
+          return helperTextArea
+        }
+
+        const container = input.parentElement
+        if (container) {
+          helperTextArea = document.createElement('textarea')
+          helperTextArea.id = helperId
+          helperTextArea.disabled = true
+          helperTextArea.style.height = '0'
+          helperTextArea.style.position = 'absolute'
+          helperTextArea.style.pointerEvents = 'none'
+          helperTextArea.style.visibility = 'hidden'
+          container.appendChild(helperTextArea)
+          return helperTextArea
+        }
+      }
+      return null
     },
     genInput () {
       const input = VTextField.options.methods.genInput.call(this)
